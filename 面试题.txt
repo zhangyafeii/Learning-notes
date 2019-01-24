@@ -698,38 +698,217 @@ django面试题：
 		用于帮助用户实现版本控制的软件
 	
 	24.git的命令？
-		初始化
-			git init			当前文件夹初始化
-		代码提交
-			git add file/.		自动检测工作区修改的内容提交到暂存区
-			git status			查看当前文件夹工作区的状态：是否有内容修改
-			git commit -m '描述'	暂存区内容提交到仓库
-		代码回滚
-			git checkout file				暂存区回滚到工作区
-			git reset --hard '版本号'		回滚到指定版本的工作区
-			git reset --soft '版本号'		将指定版本回滚到暂存区
-			git reset --mix '版本号'		将指定版本回滚到修改过的内容
-		查看版本日志
-			git log						查看日志信息：	命令(版本号)	作者	时间	版本描述
-			git log --pretty=oneline	日志信息：版本号	版本描述
-			git reflog					日志信息：版本号缩写(7位)	HEAD(x)		命令	操作记录
+		第一阶段：基础命令
+			初始化
+				git init			当前文件夹初始化
+			代码提交
+				git status			自动检测工作区修改的内容
+				git add file/.		将红色部分(修改内容)指定文件/全部提交到暂存区
+				git commit -m '描述'	暂存区内容提交到仓库
+				git commit -a '描述' == git add . + git commit -m '描述'
+			代码回滚
+				git checkout file				暂存区回滚到工作区
+				git reset --hard '版本号'		回滚到指定版本的工作区
+				git reset --soft '版本号'		将指定版本回滚到暂存区
+				git reset --mix '版本号'		将指定版本回滚到修改过的内容
+			查看版本日志
+				git log						查看日志信息：	命令(版本号)	作者	时间	版本描述
+				git log --pretty=oneline	日志信息：版本号	版本描述
+				git reflog					日志信息：版本号缩写(7位)	HEAD(x)		命令	操作记录
 
-			注：git log: 若回滚到之前的版本，后面的版本将不会显示	git reflog会显示所有版本信息
-		删除文件
-			rm file
-			git add/rm file
-			git commit -m 'delete'
-		撤销删除操作
-			rm file
-			git checkout --file		回滚至修改前的状态
+				注：git log: 若回滚到之前的版本，后面的版本将不会显示	git reflog会显示所有版本信息
+			删除文件
+				rm file
+				git add/rm file
+				git commit -m 'delete'
+			撤销删除操作
+				rm file
+				git checkout --file		回滚至修改前的状态
 
-			rm file
-			git add file
-			git reset HEAD file
-			git checkout --file		回滚至提交到暂存区前的状态
+				rm file
+				git add file
+				git reset HEAD file
+				git checkout --file		回滚至提交到暂存区前的状态
+				
+				rm file
+				git reset --hrad '版本号'	回滚至指定版本号
 			
-			rm file
-			git reset --hrad '版本号'	回滚至指定版本号
+		第二阶段：假设公司产品已经上线，要继续研发功能，你正在研发一个新功能，此时线上产品出bug了，需要你马上解决一下，或者临时新功能到来，这时你会怎么办？
+			方式一：git stash：用于将工作区发生变化的所有文件获取临时存储在“某个地方”，将工作区还原当前版本未操作前的状态；
+								stash还可以将临时存储在“某个地方”的文件再次拿回到工作区。
+				git stash	将新增加的功能放到一个神奇的地方，代码回到修改之前的状态
+
+				开始解决bug
+				...
+				解决完问题并提交代码，产品上线
+
+				git stash pop	将新增加的功能和现有代码合并
+				注：此时会出现两种情况	1.顺利合并	2.合并冲突，需要手动解决
+
+				冲突
+					$ git stash pop
+					Auto-merging README.md
+					CONFLICT (content): Merge conflict in README.md
+					
+				代码
+					<<<<<<< Updated upstream
+
+					=======
+							> bug
+						- 新功能
+					>>>>>>> Stashed changes
+				
+				stash相关常用命令：
+					git stash             将当前工作区所有修改过的内容存储到“某个地方”，将工作区还原到当前版本未修改过的状态
+					git stash list        查看“某个地方”存储的所有记录
+					git stash clear     清空“某个地方”
+					git stash pop       将第一个记录从“某个地方”重新拿到工作区（可能有冲突）
+					git stash apply     编号, 将指定编号记录从“某个地方”重新拿到工作区（可能有冲突） 
+					git stash drop      编号，删除指定编号的记录
+					
+					git stash作用，帮助我们暂时存储已经开发一些功能的代码，继续做其他事情，做完之后，再回来继续开发
+				
+			方式二：git branch
+				git branch dev	创建一个新的dev分支
+				git checkout dev	你跳转到dev分支开发新功能
+				git add .
+				git commit -m 'xxxx'
+
+				公司产品出现Bug
+
+				git branch master	跳转到master分支
+				git branch dev2		创建一个dev2分支解决bug
+				git checkout dev2	找另一个人跳转到dev2分支解决bug
+				...		解决完bug
+				git add .
+				git commit -m '修改bug‘		提交代码
+
+				git checkout master	跳转到master分支
+				git merge dev2		将master与dev2分支进行合并
+
+				git branch -d dev2	删除dev2分支
+
+				这个过程中你可以继续在dev分支上进行开发，开发完成之后
+				git add .
+				git commit -m ’新功能完成'
+
+				git branch master
+				git merge dev	master分支与dev分支进行合并，发生冲突手动解决
+
+				branch常见命令
+					git branch	查看分支
+					git branch dev	创建分支dev
+					git checkout dev	跳转到分支dev
+					git branch bug
+					git merge bug	合并分支bug
+					git branch -d bug	删除分支bug
+					
+		第三阶段：自己在家里的电脑写完代码要带到公司继续开发，u盘？有风险
+				  需要一个代码托管的网站：github、Bitbucket、码云
+				  自己创建一个代码托管的网站：gitlab
+				  注册账号：
+					用户名：邮箱
+					密码：
+				将本地代码上传到github
+					git remote add origin https://github.com/zhangyafeii/rest_vue.git
+					# git pull --rebase origin master		代码合并	可能需要
+					git push -u origin master	代码推送到远程master
+
+					git checkout dev		切换到dev分支
+					git push -u origin dev	将代码推送到远程dev分支
+				
+				从远程下载代码
+					git clone  https://github.com/zhangyafeii/rest_vue.git
+					注：默认只下载master分支
+
+					git pull origin dev	从远程下载dev分支，直接下载到本地工作区。等于以上两步
+						- git fetch origin dev	从远程下载到本地版本库
+						- git merge origin/dev	将本地版本库与工作区合并	git rebase origin/dev	保持提交记录的整洁
+					# git pull origin master
+						# git fetch origin master
+						# git merge origin/master
+					
+			场景演示：
+				回到家：
+					git pull origin dev		从远程下载dev分支
+					修改代码
+					git add .
+					git commit -m '描述'
+					git push origin dev		将本地代码上传到远程
+					
+				去到公司
+					git pull origin dev
+					修改代码
+					git add .
+					git commit -m '描述'
+					git push origin dev
+					
+		总结：git + github
+
+	25.如果代码出现bug，你们是如何解决的？
+		创建一个bug分支，然后进行bug处理，处理完毕后，合并到master分支
+		删除bug分支
+		回到dev分支继续开发
+		
+	26.redis
+		mysql是一个软件，帮助开发者对一台机器的硬盘进行操作
+		redis是一个软件，帮助开发者对一台机器的内存进行操作
+		
+		关键字：缓存，优先去redis中获取，如果没有就是数据库
+		
+		安装：
+			1.下载和安装
+				wget http://download.redis.io/releases/redis-5.0.3.tar.gz
+				tar xzf redis-3.0.6.tar.gz
+				cd redis-3.0.6
+				make
+			2. 启动服务端
+				src/redis-server	redis.conf
+			3. 启动客户端
+				src/redis-cli
+				redis> set foo bar
+				OK
+				redis> get foo
+				"bar"
+				
+		基本使用：
+			1. 创建连接
+			################################ 创建连接 ####################################3
+			# import redis
+			#
+			# conn = redis.Redis(host='192.168.137.191', port=6379, password='0000')
+			#
+			# conn.set('x1', 'zhangyafei', ex=5)   # ex： 超时时间，秒
+			#
+			# v1 = conn.get('x1')
+			# print(v1)
+
+			2. 连接池
+			################################## 连接池 ######################################
+			# import redis
+			#
+			# pool = redis.ConnectionPool(host='192.168.137.191', port=6379, password='0000', max_connections=1000)
+			# max_connection最多创建1000个连接
+			# conn = redis.Redis(connection_pool=pool)
+			#
+			# conn.set('foo', 'Bar')
+			#
+			# val = conn.get('foo')
+			#
+			# print(val)
+			
+			连接池注意：连接池只创建一次	
+				import redis
+				# 最简单的单例模式：写一个py文件导入
+				from redis_pool import POOL
+
+				while True:
+					key = input('请输入key:')
+					value = input('请输入value:')
+					# 去连接池中获取连接
+					conn = redis.Redis(connection_pool=POOL)
+					# 设置值
+					conn.set(key, value)
 		
 Flask面试题
 
